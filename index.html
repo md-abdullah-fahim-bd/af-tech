@@ -45,6 +45,15 @@
             opacity: 0.9;
         }
 
+        .developer-credit {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
         .main-content {
             display: grid;
             grid-template-columns: 1fr 350px;
@@ -88,6 +97,18 @@
             padding: 40px;
         }
 
+        .camera-info {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
         .controls {
             display: flex;
             gap: 15px;
@@ -105,6 +126,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            position: relative;
         }
 
         .btn-primary {
@@ -131,6 +153,16 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .btn.switching {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
 
         .status {
@@ -262,6 +294,40 @@
             margin-top: 10px;
         }
 
+        .camera-selector {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .camera-list {
+            margin-top: 10px;
+        }
+
+        .camera-option {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-option:hover {
+            background: #e9ecef;
+        }
+
+        .camera-option.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -274,6 +340,11 @@
             .controls {
                 justify-content: center;
             }
+
+            .btn {
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
         }
     </style>
 </head>
@@ -281,7 +352,11 @@
     <div class="container">
         <div class="header">
             <h1>🎯 Enhanced Human Detection</h1>
-            <p>Real-time person detection with improved camera support</p>
+            <p>Real-time person detection with advanced camera support</p>
+            <div class="developer-credit">
+                <strong>👨‍💻 Developed by: Abdullah Fahim</strong><br>
+                Advanced AI-powered surveillance system
+            </div>
         </div>
 
         <div class="main-content">
@@ -295,12 +370,20 @@
                     </div>
                     <video id="video" autoplay muted playsinline style="display: none;"></video>
                     <canvas id="canvas"></canvas>
+                    <div id="cameraInfo" class="camera-info" style="display: none;"></div>
                 </div>
 
                 <div class="controls">
                     <button id="startBtn" class="btn btn-primary">Start Camera</button>
-                    <button id="switchBtn" class="btn btn-secondary" disabled>Switch Camera</button>
+                    <button id="switchBtn" class="btn btn-secondary" disabled>
+                        <span id="switchText">Switch Camera</span>
+                    </button>
                     <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
+                </div>
+
+                <div id="cameraSelector" class="camera-selector" style="display: none;">
+                    <strong>📱 Available Cameras:</strong>
+                    <div id="cameraList" class="camera-list"></div>
                 </div>
 
                 <div id="status" class="status loading">
@@ -340,12 +423,16 @@
                 this.status = document.getElementById('status');
                 this.logContainer = document.getElementById('logContainer');
                 this.cameraContainer = document.getElementById('cameraContainer');
+                this.cameraInfo = document.getElementById('cameraInfo');
+                this.cameraSelector = document.getElementById('cameraSelector');
+                this.cameraList = document.getElementById('cameraList');
                 
                 this.model = null;
                 this.stream = null;
                 this.isDetecting = false;
-                this.currentCamera = 'user';
+                this.currentCameraIndex = 0;
                 this.availableCameras = [];
+                this.isSwitching = false;
                 
                 this.detectionHistory = [];
                 this.currentPeopleCount = 0;
@@ -361,7 +448,6 @@
             async init() {
                 this.updateStatus('loading', 'Checking browser compatibility...');
                 
-                // Check browser support
                 if (!this.checkBrowserSupport()) {
                     this.updateStatus('error', 'Browser not supported. Please use Chrome, Firefox, or Safari.');
                     return;
@@ -369,7 +455,7 @@
 
                 this.setupEventListeners();
                 await this.loadAIModel();
-                await this.checkCameraPermissions();
+                await this.enumerateCameras();
             }
 
             checkBrowserSupport() {
@@ -382,12 +468,10 @@
                 this.updateStatus('loading', 'Loading AI detection model...');
                 
                 try {
-                    // Load TensorFlow.js first
                     if (typeof tf === 'undefined') {
                         await this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
                     }
                     
-                    // Load COCO-SSD model
                     if (typeof cocoSsd === 'undefined') {
                         await this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
                     }
@@ -415,25 +499,74 @@
                 });
             }
 
-            async checkCameraPermissions() {
+            async enumerateCameras() {
                 try {
+                    // Request permission first to get device labels
+                    await navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(stream => {
+                            stream.getTracks().forEach(track => track.stop());
+                        })
+                        .catch(() => {}); // Ignore errors, just trying to get permissions
+
                     const devices = await navigator.mediaDevices.enumerateDevices();
                     this.availableCameras = devices.filter(device => device.kind === 'videoinput');
+                    
+                    console.log('Available cameras:', this.availableCameras);
                     
                     if (this.availableCameras.length === 0) {
                         this.updateStatus('error', '❌ No cameras found on this device.');
                         return;
                     }
                     
-                    console.log(`Found ${this.availableCameras.length} camera(s)`);
+                    this.renderCameraList();
+                    
+                    // Enable switch button if multiple cameras
+                    if (this.availableCameras.length > 1) {
+                        this.cameraSelector.style.display = 'block';
+                    }
+                    
                 } catch (error) {
                     console.error('Camera enumeration error:', error);
                 }
             }
 
+            renderCameraList() {
+                this.cameraList.innerHTML = '';
+                
+                this.availableCameras.forEach((camera, index) => {
+                    const button = document.createElement('button');
+                    button.className = `camera-option ${index === this.currentCameraIndex ? 'active' : ''}`;
+                    
+                    let cameraName = camera.label || `Camera ${index + 1}`;
+                    if (cameraName.toLowerCase().includes('front') || cameraName.toLowerCase().includes('user')) {
+                        cameraName += ' 📱 (Front)';
+                    } else if (cameraName.toLowerCase().includes('back') || cameraName.toLowerCase().includes('environment')) {
+                        cameraName += ' 📷 (Back)';
+                    } else {
+                        // Try to determine camera type by index
+                        cameraName += index === 0 ? ' 📱 (Front)' : ' 📷 (Back)';
+                    }
+                    
+                    button.textContent = cameraName;
+                    button.addEventListener('click', () => this.selectCamera(index));
+                    this.cameraList.appendChild(button);
+                });
+            }
+
+            async selectCamera(index) {
+                if (this.isSwitching || index === this.currentCameraIndex) return;
+                
+                this.currentCameraIndex = index;
+                this.renderCameraList();
+                
+                if (this.stream) {
+                    await this.switchCamera();
+                }
+            }
+
             setupEventListeners() {
                 document.getElementById('startBtn').addEventListener('click', () => this.startCamera());
-                document.getElementById('switchBtn').addEventListener('click', () => this.switchCamera());
+                document.getElementById('switchBtn').addEventListener('click', () => this.switchToNextCamera());
                 document.getElementById('stopBtn').addEventListener('click', () => this.stopCamera());
                 
                 this.video.addEventListener('loadedmetadata', () => {
@@ -445,6 +578,8 @@
 
                 this.video.addEventListener('loadeddata', () => {
                     this.cameraReady = true;
+                    this.isSwitching = false;
+                    this.updateCameraInfo();
                     if (this.modelLoaded) {
                         this.startDetection();
                     }
@@ -460,39 +595,14 @@
                 this.updateStatus('loading', 'Starting camera...');
                 
                 try {
-                    // Simple constraints first
-                    const constraints = {
-                        video: {
-                            facingMode: this.currentCamera,
-                            width: { ideal: 640, max: 1280 },
-                            height: { ideal: 480, max: 720 }
-                        }
-                    };
-
-                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    this.video.srcObject = this.stream;
-                    
-                    // Show video, hide placeholder
-                    this.video.style.display = 'block';
-                    const placeholder = this.cameraContainer.querySelector('.camera-placeholder');
-                    if (placeholder) {
-                        placeholder.style.display = 'none';
-                    }
-                    
-                    // Update button states
-                    document.getElementById('startBtn').disabled = true;
-                    document.getElementById('switchBtn').disabled = this.availableCameras.length < 2;
-                    document.getElementById('stopBtn').disabled = false;
-                    
-                    this.updateStatus('ready', '✅ Camera started successfully!');
-                    this.updateLogContainer('Camera active. Human detection in progress...');
+                    await this.initializeCamera();
                     
                 } catch (error) {
                     console.error('Camera error:', error);
                     let errorMessage = '❌ Camera access failed: ';
                     
                     if (error.name === 'NotAllowedError') {
-                        errorMessage += 'Permission denied. Please allow camera access.';
+                        errorMessage += 'Permission denied. Please allow camera access and reload the page.';
                     } else if (error.name === 'NotFoundError') {
                         errorMessage += 'No camera found.';
                     } else if (error.name === 'NotReadableError') {
@@ -505,16 +615,109 @@
                 }
             }
 
-            async switchCamera() {
-                if (this.availableCameras.length < 2) return;
+            async initializeCamera() {
+                const selectedCamera = this.availableCameras[this.currentCameraIndex];
                 
-                this.currentCamera = this.currentCamera === 'user' ? 'environment' : 'user';
+                let constraints;
+                if (selectedCamera && selectedCamera.deviceId) {
+                    // Use specific device ID
+                    constraints = {
+                        video: {
+                            deviceId: { exact: selectedCamera.deviceId },
+                            width: { ideal: 640, max: 1280 },
+                            height: { ideal: 480, max: 720 }
+                        }
+                    };
+                } else {
+                    // Fallback to facingMode
+                    const facingMode = this.currentCameraIndex === 0 ? 'user' : 'environment';
+                    constraints = {
+                        video: {
+                            facingMode: { ideal: facingMode },
+                            width: { ideal: 640, max: 1280 },
+                            height: { ideal: 480, max: 720 }
+                        }
+                    };
+                }
+
+                console.log('Camera constraints:', constraints);
+
+                this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                this.video.srcObject = this.stream;
                 
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
+                // Show video, hide placeholder
+                this.video.style.display = 'block';
+                this.cameraInfo.style.display = 'block';
+                const placeholder = this.cameraContainer.querySelector('.camera-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'none';
                 }
                 
-                await this.startCamera();
+                // Update button states
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('switchBtn').disabled = this.availableCameras.length < 2;
+                document.getElementById('stopBtn').disabled = false;
+                
+                this.updateStatus('ready', '✅ Camera started successfully!');
+                this.updateLogContainer('Camera active. Human detection in progress...');
+            }
+
+            async switchToNextCamera() {
+                if (this.availableCameras.length < 2 || this.isSwitching) return;
+                
+                this.currentCameraIndex = (this.currentCameraIndex + 1) % this.availableCameras.length;
+                await this.switchCamera();
+            }
+
+            async switchCamera() {
+                if (this.isSwitching) return;
+                
+                this.isSwitching = true;
+                const switchBtn = document.getElementById('switchBtn');
+                const switchText = document.getElementById('switchText');
+                
+                switchBtn.classList.add('switching');
+                switchText.textContent = 'Switching...';
+                
+                this.updateStatus('loading', 'Switching camera...');
+                
+                try {
+                    // Stop current stream
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
+                    }
+                    
+                    this.isDetecting = false;
+                    this.cameraReady = false;
+                    
+                    // Wait a bit for camera to release
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Start new camera
+                    await this.initializeCamera();
+                    this.renderCameraList();
+                    
+                } catch (error) {
+                    console.error('Camera switch error:', error);
+                    this.updateStatus('error', `❌ Failed to switch camera: ${error.message}`);
+                } finally {
+                    switchBtn.classList.remove('switching');
+                    switchText.textContent = 'Switch Camera';
+                    this.isSwitching = false;
+                }
+            }
+
+            updateCameraInfo() {
+                const camera = this.availableCameras[this.currentCameraIndex];
+                let cameraName = camera?.label || `Camera ${this.currentCameraIndex + 1}`;
+                
+                if (cameraName.toLowerCase().includes('front') || this.currentCameraIndex === 0) {
+                    cameraName = '📱 Front Camera';
+                } else {
+                    cameraName = '📷 Back Camera';
+                }
+                
+                this.cameraInfo.textContent = cameraName;
             }
 
             stopCamera() {
@@ -528,8 +731,8 @@
                 
                 this.video.srcObject = null;
                 this.video.style.display = 'none';
+                this.cameraInfo.style.display = 'none';
                 
-                // Show placeholder again
                 const placeholder = this.cameraContainer.querySelector('.camera-placeholder');
                 if (placeholder) {
                     placeholder.style.display = 'block';
@@ -537,7 +740,6 @@
                 
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // Update button states
                 document.getElementById('startBtn').disabled = false;
                 document.getElementById('switchBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = true;
@@ -580,12 +782,10 @@
                 people.forEach((person, index) => {
                     const [x, y, width, height] = person.bbox;
                     
-                    // Draw red rectangle
                     this.ctx.strokeStyle = '#ff0000';
                     this.ctx.lineWidth = 3;
                     this.ctx.strokeRect(x, y, width, height);
                     
-                    // Draw confidence label
                     const confidence = Math.round(person.score * 100);
                     this.ctx.fillStyle = '#ff0000';
                     this.ctx.font = 'bold 16px Arial';
@@ -597,7 +797,7 @@
                 const now = Date.now();
                 const timeDiff = now - this.lastDetectionTime;
                 
-                if (timeDiff > 2000) { // 2 second delay to avoid false positives
+                if (timeDiff > 2000) {
                     if (newCount > this.currentPeopleCount) {
                         const arrivals = newCount - this.currentPeopleCount;
                         for (let i = 0; i < arrivals; i++) {
@@ -621,7 +821,6 @@
                 const now = new Date();
                 const timeString = now.toLocaleString();
                 
-                // Capture photo
                 const photoCanvas = document.createElement('canvas');
                 const photoCtx = photoCanvas.getContext('2d');
                 photoCanvas.width = this.video.videoWidth;
@@ -633,6 +832,7 @@
                     type: type,
                     time: timeString,
                     photo: photoDataUrl,
+                    camera: this.availableCameras[this.currentCameraIndex]?.label || `Camera ${this.currentCameraIndex + 1}`,
                     id: Date.now()
                 };
                 
@@ -643,7 +843,6 @@
                 
                 this.renderLogEntry(logEntry);
                 
-                // Keep only last 20 entries for performance
                 if (this.detectionHistory.length > 20) {
                     this.detectionHistory = this.detectionHistory.slice(0, 20);
                     this.refreshLog();
@@ -662,6 +861,7 @@
                     <div class="log-time">${entry.time}</div>
                     <div class="log-action">
                         ${entry.type === 'arrival' ? '👋 Person arrived' : '🚶 Person left'}
+                        <small style="display: block; opacity: 0.7;">📷 ${entry.camera}</small>
                     </div>
                     <img src="${entry.photo}" alt="Detection photo" class="log-photo">
                 `;
@@ -691,20 +891,8 @@
             }
         }
 
-        // Initialize when page loads
         window.addEventListener('load', () => {
             new EnhancedHumanDetection();
-        });
-
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                // Page is hidden, you might want to pause detection
-                console.log('Page hidden');
-            } else {
-                // Page is visible again
-                console.log('Page visible');
-            }
         });
     </script>
 </body>
