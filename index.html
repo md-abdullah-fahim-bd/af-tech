@@ -3,8 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Human Detection System by Abdullah Fahim</title>
+    <title>Advanced Human Detection System by Abdullah Fahim</title>
+    <!-- Updated EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Updated TensorFlow.js SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            --accent-gradient: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            --danger-gradient: linear-gradient(135deg, #ff7675, #fd79a8);
+            --success-gradient: linear-gradient(135deg, #00b894, #00cec9);
+            
+            --primary-color: #667eea;
+            --secondary-color: #ff6b6b;
+            --accent-color: #ffeaa7;
+            --danger-color: #ff7675;
+            --success-color: #00b894;
+            
+            --text-light: #ffffff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+            
+            --bg-light: #ffffff;
+            --bg-dark: #2d3436;
+            --bg-muted: #f8f9fa;
+            
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-md: 0 10px 30px rgba(0,0,0,0.2);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.1);
+            
+            --border-radius-sm: 5px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 15px;
+            --border-radius-xl: 20px;
+        }
+
+        .dark-mode {
+            --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --secondary-gradient: linear-gradient(135deg, #f83600, #f9d423);
+            --accent-gradient: linear-gradient(135deg, #a8ff78, #78ffd6);
+            --danger-gradient: linear-gradient(135deg, #ff416c, #ff4b2b);
+            --success-gradient: linear-gradient(135deg, #0ba360, #3cba92);
+            
+            --bg-light: #2d3436;
+            --bg-dark: #1e272e;
+            --bg-muted: #2d3436;
+            --text-dark: #f8f9fa;
+            --text-muted: #a0a0a0;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,25 +63,28 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-gradient);
             min-height: 100vh;
             padding: 20px;
+            transition: all 0.3s ease;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: var(--bg-light);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
+            background: var(--secondary-gradient);
+            color: var(--text-light);
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -48,10 +101,33 @@
         .developer-credit {
             background: rgba(255,255,255,0.1);
             padding: 10px 20px;
-            border-radius: 15px;
+            border-radius: var(--border-radius-lg);
             margin-top: 15px;
             font-size: 0.9rem;
             backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--text-light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
         }
 
         .main-content {
@@ -68,9 +144,9 @@
         .camera-container {
             position: relative;
             background: #000;
-            border-radius: 15px;
+            border-radius: var(--border-radius-lg);
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-md);
             min-height: 400px;
             display: flex;
             align-items: center;
@@ -101,7 +177,7 @@
             background: rgba(0,0,0,0.7);
             color: white;
             padding: 8px 12px;
-            border-radius: 5px;
+            border-radius: var(--border-radius-sm);
             position: absolute;
             top: 10px;
             left: 10px;
@@ -130,23 +206,28 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: var(--primary-gradient);
+            color: var(--text-light);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
-            color: #2d3436;
+            background: var(--accent-gradient);
+            color: var(--text-dark);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #ff7675, #fd79a8);
-            color: white;
+            background: var(--danger-gradient);
+            color: var(--text-light);
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: var(--text-light);
         }
 
         .btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn:disabled {
@@ -168,78 +249,275 @@
         .status {
             margin-top: 20px;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: var(--border-radius-md);
             font-weight: 600;
             text-align: center;
+            transition: all 0.3s ease;
         }
 
         .status.loading {
             background: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeaa7;
+            border: 1px solid var(--accent-color);
         }
 
         .status.ready {
             background: #d4edda;
             color: #155724;
-            border: 1px solid #00b894;
+            border: 1px solid var(--success-color);
         }
 
         .status.error {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #ff7675;
+            border: 1px solid var(--danger-color);
+        }
+
+        .email-setup {
+            background: var(--bg-muted);
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .email-setup h3 {
+            color: var(--text-dark);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .form-group input.saved {
+            border-color: var(--success-color);
+            background: rgba(0, 184, 148, 0.1);
+        }
+
+        .email-status {
+            padding: 10px;
+            border-radius: var(--border-radius-sm);
+            margin-top: 10px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .email-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid var(--success-color);
+        }
+
+        .email-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid var(--danger-color);
+        }
+
+        .email-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch label {
+            margin-bottom: 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .storage-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .storage-controls button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn {
+            background: var(--danger-color);
+            color: var(--text-light);
+        }
+
+        .export-btn {
+            background: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        .import-btn {
+            background: var(--success-color);
+            color: var(--text-light);
+        }
+
+        .storage-controls button:hover {
+            filter: brightness(1.1);
+        }
+
+        .storage-info {
+            background: #e8f5e8;
+            border: 1px solid var(--success-color);
+            border-radius: var(--border-radius-sm);
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #155724;
         }
 
         .detection-log {
-            background: #f8f9fa;
-            border-radius: 15px;
+            background: var(--bg-muted);
+            border-radius: var(--border-radius-lg);
             padding: 20px;
             max-height: 600px;
             overflow-y: auto;
+            transition: all 0.3s ease;
         }
 
         .detection-log h3 {
-            color: #2d3436;
+            color: var(--text-dark);
             margin-bottom: 20px;
             font-size: 1.3rem;
             text-align: center;
         }
 
         .log-entry {
-            background: white;
-            border-radius: 10px;
+            background: var(--bg-light);
+            border-radius: var(--border-radius-md);
             padding: 15px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 4px solid #667eea;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
         }
 
         .log-entry.arrival {
-            border-left-color: #00b894;
+            border-left-color: var(--success-color);
         }
 
         .log-entry.departure {
-            border-left-color: #ff7675;
+            border-left-color: var(--danger-color);
         }
 
         .log-time {
             font-weight: 600;
-            color: #2d3436;
+            color: var(--text-dark);
             margin-bottom: 5px;
         }
 
         .log-action {
             font-size: 0.9rem;
-            color: #636e72;
+            color: var(--text-muted);
             margin-bottom: 10px;
         }
 
         .log-photo {
             width: 100%;
             max-width: 200px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .email-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .email-indicator.sent {
+            color: var(--success-color);
+        }
+
+        .email-indicator.failed {
+            color: var(--danger-color);
         }
 
         .stats {
@@ -250,28 +528,29 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--bg-light);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: var(--border-radius-md);
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
         }
 
         .stat-number {
             font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            color: var(--primary-color);
         }
 
         .stat-label {
             font-size: 0.9rem;
-            color: #636e72;
+            color: var(--text-muted);
             margin-top: 5px;
         }
 
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -284,48 +563,96 @@
             100% { transform: rotate(360deg); }
         }
 
-        .retry-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 300px;
         }
 
-        .camera-selector {
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .notification.arrival {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.departure {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .notification.email {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .setup-guide {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: var(--border-radius-md);
+            padding: 15px;
             margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 10px;
             font-size: 0.9rem;
         }
 
-        .camera-list {
-            margin-top: 10px;
+        .setup-guide h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
         }
 
-        .camera-option {
-            display: block;
-            width: 100%;
-            padding: 8px 12px;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .setup-guide ol {
+            margin-left: 20px;
         }
 
-        .camera-option:hover {
-            background: #e9ecef;
+        .setup-guide li {
+            margin-bottom: 5px;
         }
 
-        .camera-option.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+        .image-options {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: var(--border-radius-md);
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .image-options h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .hidden-file-input {
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -345,18 +672,27 @@
                 font-size: 0.9rem;
                 padding: 10px 20px;
             }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .storage-controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Enhanced Human Detection</h1>
-            <p>Real-time person detection with advanced camera support</p>
+            <h1>🎯 Advanced Human Detection</h1>
+            <p>AI-powered surveillance with auto-save settings</p>
             <div class="developer-credit">
                 <strong>👨‍💻 Developed by: Abdullah Fahim</strong><br>
-                Advanced AI-powered surveillance system
+                Advanced AI-powered surveillance system with persistent storage
             </div>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
         </div>
 
         <div class="main-content">
@@ -381,11 +717,6 @@
                     <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
                 </div>
 
-                <div id="cameraSelector" class="camera-selector" style="display: none;">
-                    <strong>📱 Available Cameras:</strong>
-                    <div id="cameraList" class="camera-list"></div>
-                </div>
-
                 <div id="status" class="status loading">
                     <div class="loading-spinner"></div>
                     <div>Initializing system...</div>
@@ -393,6 +724,109 @@
             </div>
 
             <div class="detection-log">
+                <div class="email-setup">
+                    <h3>📧 Email Notifications</h3>
+                    
+                    <div class="form-group">
+                        <label for="serviceId">EmailJS Service ID</label>
+                        <input type="text" id="serviceId" placeholder="service_xxxxxxx">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="templateId">EmailJS Template ID</label>
+                        <input type="text" id="templateId" placeholder="template_xxxxxxx">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="publicKey">EmailJS Public Key</label>
+                        <input type="text" id="publicKey" placeholder="Your public key">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userEmail">Your Email Address</label>
+                        <input type="email" id="userEmail" placeholder="Enter your email to receive alerts">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imageMode">Image Attachment Mode</label>
+                        <select id="imageMode">
+                            <option value="compressed">Compressed Image (Recommended)</option>
+                            <option value="thumbnail">Small Thumbnail</option>
+                            <option value="none">No Image (Text Only)</option>
+                            <option value="link">Image Link (if using cloud storage)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="imageQuality">Image Quality (1-100)</label>
+                        <input type="range" id="imageQuality" min="1" max="100" value="30">
+                        <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+                            Quality: <span id="qualityValue">30</span>% (Lower = Smaller file)
+                        </div>
+                    </div>
+                    
+                    <div class="toggle-switch">
+                        <label for="enableEmailNotifications">Enable Email Alerts</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableEmailNotifications">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-switch">
+                        <label for="emailOnArrival">Email on Arrival</label>
+                        <label class="switch">
+                            <input type="checkbox" id="emailOnArrival" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-switch">
+                        <label for="emailOnDeparture">Email on Departure</label>
+                        <label class="switch">
+                            <input type="checkbox" id="emailOnDeparture" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <button id="testEmailBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                        Test Email
+                    </button>
+                    
+                    <div class="storage-controls">
+                        <button id="clearStorageBtn" class="clear-btn">Clear Saved Data</button>
+                        <button id="exportSettingsBtn" class="export-btn">Export Settings</button>
+                        <button id="importSettingsBtn" class="import-btn">Import Settings</button>
+                    </div>
+                    
+                    <input type="file" id="importFileInput" class="hidden-file-input" accept=".json">
+                    
+                    <div id="storageInfo" class="storage-info">
+                        💾 Settings are automatically saved to your browser
+                    </div>
+                    
+                    <div id="emailStatus" class="email-status" style="display: none;"></div>
+                    
+                    <div class="image-options">
+                        <h4>📸 Image Size Optimization:</h4>
+                        <p><strong>Compressed:</strong> Reduces image size to ~20-30KB</p>
+                        <p><strong>Thumbnail:</strong> Very small preview (~5-10KB)</p>
+                        <p><strong>No Image:</strong> Text-only alerts (fastest)</p>
+                        <p><strong>Image Link:</strong> For cloud storage URLs</p>
+                    </div>
+                    
+                    <div class="setup-guide">
+                        <h4>📋 EmailJS Setup Guide:</h4>
+                        <ol>
+                            <li>Go to <a href="https://www.emailjs.com/" target="_blank">EmailJS.com</a> and create account</li>
+                            <li>Add email service (Gmail, Outlook, etc.)</li>
+                            <li>Create email template with variables: to_email, detection_type, detection_time, photo_data, image_info</li>
+                            <li>Copy Service ID, Template ID, and Public Key above</li>
+                            <li>Settings will be saved automatically for next visit</li>
+                        </ol>
+                    </div>
+                </div>
+
                 <div class="stats">
                     <div class="stat-card">
                         <div class="stat-number" id="totalDetections">0</div>
@@ -406,7 +840,7 @@
 
                 <h3>📋 Detection Log</h3>
                 <div id="logContainer">
-                    <div style="text-align: center; color: #636e72; padding: 20px;">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px;">
                         System initializing... Please wait.
                     </div>
                 </div>
@@ -414,8 +848,16 @@
         </div>
     </div>
 
+    <div id="notification" class="notification">
+        <div class="notification-icon">👤</div>
+        <div class="notification-content">
+            <div class="notification-title">Detection Alert</div>
+            <div class="notification-message">Person detected</div>
+        </div>
+    </div>
+
     <script>
-        class EnhancedHumanDetection {
+        class AdvancedHumanDetection {
             constructor() {
                 this.video = document.getElementById('video');
                 this.canvas = document.getElementById('canvas');
@@ -424,9 +866,30 @@
                 this.logContainer = document.getElementById('logContainer');
                 this.cameraContainer = document.getElementById('cameraContainer');
                 this.cameraInfo = document.getElementById('cameraInfo');
-                this.cameraSelector = document.getElementById('cameraSelector');
-                this.cameraList = document.getElementById('cameraList');
+                this.notification = document.getElementById('notification');
+                this.emailStatus = document.getElementById('emailStatus');
+                this.storageInfo = document.getElementById('storageInfo');
                 
+                // Storage key for localStorage
+                this.storageKey = 'humanDetectionSettings';
+                
+                // Email settings with defaults
+                this.settings = {
+                    userEmail: '',
+                    serviceId: '',
+                    templateId: '',
+                    publicKey: '',
+                    enableEmailNotifications: false,
+                    emailOnArrival: true,
+                    emailOnDeparture: true,
+                    imageMode: 'compressed',
+                    imageQuality: 30,
+                    isDarkMode: false
+                };
+                
+                this.emailJSInitialized = false;
+                
+                // Camera state
                 this.model = null;
                 this.stream = null;
                 this.isDetecting = false;
@@ -434,10 +897,12 @@
                 this.availableCameras = [];
                 this.isSwitching = false;
                 
+                // Detection stats
                 this.detectionHistory = [];
                 this.currentPeopleCount = 0;
                 this.totalDetections = 0;
                 this.lastDetectionTime = 0;
+                this.emailsSent = 0;
                 
                 this.modelLoaded = false;
                 this.cameraReady = false;
@@ -446,7 +911,10 @@
             }
 
             async init() {
-                this.updateStatus('loading', 'Checking browser compatibility...');
+                this.updateStatus('loading', 'Initializing system...');
+                
+                // Load saved settings first
+                this.loadSettings();
                 
                 if (!this.checkBrowserSupport()) {
                     this.updateStatus('error', 'Browser not supported. Please use Chrome, Firefox, or Safari.');
@@ -454,14 +922,209 @@
                 }
 
                 this.setupEventListeners();
+                this.populateFormFields();
+                await this.checkEmailJSAvailability();
                 await this.loadAIModel();
                 await this.enumerateCameras();
+                
+                this.updateStorageInfo();
             }
 
             checkBrowserSupport() {
                 return !!(navigator.mediaDevices && 
                          navigator.mediaDevices.getUserMedia && 
-                         window.HTMLCanvasElement);
+                         window.HTMLCanvasElement &&
+                         window.localStorage);
+            }
+
+            // Storage Management Methods
+            loadSettings() {
+                try {
+                    const savedSettings = localStorage.getItem(this.storageKey);
+                    if (savedSettings) {
+                        const parsed = JSON.parse(savedSettings);
+                        this.settings = { ...this.settings, ...parsed };
+                        
+                        // Apply dark mode if saved
+                        if (this.settings.isDarkMode) {
+                            document.body.classList.add('dark-mode');
+                            document.getElementById('themeToggle').textContent = '☀️';
+                        }
+                        
+                        this.showNotification('info', 'Settings loaded from browser storage');
+                    }
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                    this.showEmailStatus('error', '❌ Error loading saved settings');
+                }
+            }
+
+            saveSettings() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.settings));
+                    this.updateStorageInfo();
+                    
+                    // Visual feedback for saved fields
+                    this.markFieldsAsSaved();
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                    this.showEmailStatus('error', '❌ Error saving settings to browser storage');
+                }
+            }
+
+            markFieldsAsSaved() {
+                const fields = ['serviceId', 'templateId', 'publicKey', 'userEmail'];
+                fields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field && field.value) {
+                        field.classList.add('saved');
+                        setTimeout(() => {
+                            field.classList.remove('saved');
+                        }, 2000);
+                    }
+                });
+            }
+
+            populateFormFields() {
+                // Populate text inputs
+                document.getElementById('serviceId').value = this.settings.serviceId;
+                document.getElementById('templateId').value = this.settings.templateId;
+                document.getElementById('publicKey').value = this.settings.publicKey;
+                document.getElementById('userEmail').value = this.settings.userEmail;
+                
+                // Populate select
+                document.getElementById('imageMode').value = this.settings.imageMode;
+                
+                // Populate range input
+                document.getElementById('imageQuality').value = this.settings.imageQuality;
+                document.getElementById('qualityValue').textContent = this.settings.imageQuality;
+                
+                // Populate checkboxes
+                document.getElementById('enableEmailNotifications').checked = this.settings.enableEmailNotifications;
+                document.getElementById('emailOnArrival').checked = this.settings.emailOnArrival;
+                document.getElementById('emailOnDeparture').checked = this.settings.emailOnDeparture;
+                
+                // Initialize EmailJS if public key is available
+                if (this.settings.publicKey && this.emailJSInitialized) {
+                    try {
+                        emailjs.init(this.settings.publicKey);
+                        this.showEmailStatus('success', '✅ EmailJS initialized from saved settings!');
+                    } catch (error) {
+                        this.showEmailStatus('error', '❌ Error initializing EmailJS with saved key');
+                    }
+                }
+            }
+
+            updateStorageInfo() {
+                const savedData = localStorage.getItem(this.storageKey);
+                if (savedData) {
+                    const size = new Blob([savedData]).size;
+                    const lastSaved = new Date().toLocaleString();
+                    this.storageInfo.innerHTML = `
+                        💾 Settings saved (${size} bytes)<br>
+                        <small>Last updated: ${lastSaved}</small>
+                    `;
+                } else {
+                    this.storageInfo.textContent = '💾 No saved settings found';
+                }
+            }
+
+            clearStorage() {
+                if (confirm('Are you sure you want to clear all saved settings?')) {
+                    localStorage.removeItem(this.storageKey);
+                    
+                    // Reset settings to defaults
+                    this.settings = {
+                        userEmail: '',
+                        serviceId: '',
+                        templateId: '',
+                        publicKey: '',
+                        enableEmailNotifications: false,
+                        emailOnArrival: true,
+                        emailOnDeparture: true,
+                        imageMode: 'compressed',
+                        imageQuality: 30,
+                        isDarkMode: false
+                    };
+                    
+                    // Clear form fields
+                    document.getElementById('serviceId').value = '';
+                    document.getElementById('templateId').value = '';
+                    document.getElementById('publicKey').value = '';
+                    document.getElementById('userEmail').value = '';
+                    document.getElementById('imageMode').value = 'compressed';
+                    document.getElementById('imageQuality').value = 30;
+                    document.getElementById('qualityValue').textContent = '30';
+                    document.getElementById('enableEmailNotifications').checked = false;
+                    document.getElementById('emailOnArrival').checked = true;
+                    document.getElementById('emailOnDeparture').checked = true;
+                    
+                    this.updateStorageInfo();
+                    this.showEmailStatus('info', '🗑️ All settings cleared');
+                }
+            }
+
+            exportSettings() {
+                const dataStr = JSON.stringify(this.settings, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'human-detection-settings.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                this.showEmailStatus('success', '📤 Settings exported successfully!');
+            }
+
+            importSettings() {
+                document.getElementById('importFileInput').click();
+            }
+
+            handleImportFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedSettings = JSON.parse(e.target.result);
+                        
+                        // Validate imported settings
+                        if (typeof importedSettings === 'object' && importedSettings !== null) {
+                            this.settings = { ...this.settings, ...importedSettings };
+                            this.saveSettings();
+                            this.populateFormFields();
+                            this.showEmailStatus('success', '📥 Settings imported successfully!');
+                        } else {
+                            throw new Error('Invalid settings format');
+                        }
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        this.showEmailStatus('error', '❌ Error importing settings file');
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Clear the input
+                event.target.value = '';
+            }
+
+            async checkEmailJSAvailability() {
+                try {
+                    if (typeof emailjs !== 'undefined') {
+                        this.emailJSInitialized = true;
+                        this.showEmailStatus('info', '📧 EmailJS loaded. Settings auto-saved.');
+                    } else {
+                        this.showEmailStatus('error', '❌ EmailJS failed to load. Email notifications disabled.');
+                    }
+                } catch (error) {
+                    console.error('EmailJS check error:', error);
+                    this.showEmailStatus('error', '❌ EmailJS not available. Email notifications disabled.');
+                }
             }
 
             async loadAIModel() {
@@ -469,44 +1132,58 @@
                 
                 try {
                     if (typeof tf === 'undefined') {
-                        await this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+                        throw new Error('TensorFlow.js not loaded. Please check your internet connection.');
                     }
                     
                     if (typeof cocoSsd === 'undefined') {
-                        await this.loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js');
+                        throw new Error('COCO-SSD model not loaded. Please check your internet connection.');
                     }
                     
                     this.updateStatus('loading', 'Initializing AI model...');
-                    this.model = await cocoSsd.load();
+                    
+                    this.model = await cocoSsd.load({
+                        base: 'mobilenet_v2'
+                    });
+                    
                     this.modelLoaded = true;
                     
                     this.updateStatus('ready', '✅ AI model loaded successfully! Ready to start camera.');
-                    this.updateLogContainer('AI model loaded. Click "Start Camera" to begin detection.');
+                    this.updateLogContainer('AI model loaded. Your settings are saved automatically.');
                     
                 } catch (error) {
                     console.error('Model loading error:', error);
-                    this.updateStatus('error', `❌ Failed to load AI model: ${error.message}`, true);
+                    this.updateStatus('error', `❌ Failed to load AI model: ${error.message}`);
+                    
+                    setTimeout(() => {
+                        this.tryFallbackModelLoading();
+                    }, 2000);
                 }
             }
 
-            loadScript(src) {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.onload = resolve;
-                    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-                    document.head.appendChild(script);
-                });
+            async tryFallbackModelLoading() {
+                try {
+                    this.updateStatus('loading', 'Trying fallback model loading...');
+                    
+                    this.model = await cocoSsd.load({
+                        base: 'lite_mobilenet_v2'
+                    });
+                    
+                    this.modelLoaded = true;
+                    this.updateStatus('ready', '✅ AI model loaded with fallback! Ready to start camera.');
+                    
+                } catch (error) {
+                    console.error('Fallback model loading error:', error);
+                    this.updateStatus('error', '❌ All model loading attempts failed. Please refresh the page.');
+                }
             }
 
             async enumerateCameras() {
                 try {
-                    // Request permission first to get device labels
                     await navigator.mediaDevices.getUserMedia({ video: true })
                         .then(stream => {
                             stream.getTracks().forEach(track => track.stop());
                         })
-                        .catch(() => {}); // Ignore errors, just trying to get permissions
+                        .catch(() => {});
 
                     const devices = await navigator.mediaDevices.enumerateDevices();
                     this.availableCameras = devices.filter(device => device.kind === 'videoinput');
@@ -518,57 +1195,85 @@
                         return;
                     }
                     
-                    this.renderCameraList();
-                    
-                    // Enable switch button if multiple cameras
-                    if (this.availableCameras.length > 1) {
-                        this.cameraSelector.style.display = 'block';
-                    }
-                    
                 } catch (error) {
                     console.error('Camera enumeration error:', error);
                 }
             }
 
-            renderCameraList() {
-                this.cameraList.innerHTML = '';
-                
-                this.availableCameras.forEach((camera, index) => {
-                    const button = document.createElement('button');
-                    button.className = `camera-option ${index === this.currentCameraIndex ? 'active' : ''}`;
-                    
-                    let cameraName = camera.label || `Camera ${index + 1}`;
-                    if (cameraName.toLowerCase().includes('front') || cameraName.toLowerCase().includes('user')) {
-                        cameraName += ' 📱 (Front)';
-                    } else if (cameraName.toLowerCase().includes('back') || cameraName.toLowerCase().includes('environment')) {
-                        cameraName += ' 📷 (Back)';
-                    } else {
-                        // Try to determine camera type by index
-                        cameraName += index === 0 ? ' 📱 (Front)' : ' 📷 (Back)';
-                    }
-                    
-                    button.textContent = cameraName;
-                    button.addEventListener('click', () => this.selectCamera(index));
-                    this.cameraList.appendChild(button);
-                });
-            }
-
-            async selectCamera(index) {
-                if (this.isSwitching || index === this.currentCameraIndex) return;
-                
-                this.currentCameraIndex = index;
-                this.renderCameraList();
-                
-                if (this.stream) {
-                    await this.switchCamera();
-                }
-            }
-
             setupEventListeners() {
+                // Camera controls
                 document.getElementById('startBtn').addEventListener('click', () => this.startCamera());
                 document.getElementById('switchBtn').addEventListener('click', () => this.switchToNextCamera());
                 document.getElementById('stopBtn').addEventListener('click', () => this.stopCamera());
                 
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                
+                // Storage controls
+                document.getElementById('clearStorageBtn').addEventListener('click', () => this.clearStorage());
+                document.getElementById('exportSettingsBtn').addEventListener('click', () => this.exportSettings());
+                document.getElementById('importSettingsBtn').addEventListener('click', () => this.importSettings());
+                document.getElementById('importFileInput').addEventListener('change', (e) => this.handleImportFile(e));
+                
+                // Email settings with auto-save
+                document.getElementById('serviceId').addEventListener('input', (e) => {
+                    this.settings.serviceId = e.target.value.trim();
+                    this.saveSettings();
+                });
+                
+                document.getElementById('templateId').addEventListener('input', (e) => {
+                    this.settings.templateId = e.target.value.trim();
+                    this.saveSettings();
+                });
+                
+                document.getElementById('publicKey').addEventListener('input', (e) => {
+                    this.settings.publicKey = e.target.value.trim();
+                    this.saveSettings();
+                    
+                    if (this.settings.publicKey && this.emailJSInitialized) {
+                        try {
+                            emailjs.init(this.settings.publicKey);
+                            this.showEmailStatus('success', '✅ EmailJS initialized and saved!');
+                        } catch (error) {
+                            this.showEmailStatus('error', '❌ Invalid public key format.');
+                        }
+                    }
+                });
+                
+                document.getElementById('userEmail').addEventListener('input', (e) => {
+                    this.settings.userEmail = e.target.value.trim();
+                    this.saveSettings();
+                });
+                
+                document.getElementById('imageMode').addEventListener('change', (e) => {
+                    this.settings.imageMode = e.target.value;
+                    this.saveSettings();
+                });
+                
+                document.getElementById('imageQuality').addEventListener('input', (e) => {
+                    this.settings.imageQuality = parseInt(e.target.value);
+                    document.getElementById('qualityValue').textContent = this.settings.imageQuality;
+                    this.saveSettings();
+                });
+                
+                document.getElementById('enableEmailNotifications').addEventListener('change', (e) => {
+                    this.settings.enableEmailNotifications = e.target.checked;
+                    this.saveSettings();
+                });
+                
+                document.getElementById('emailOnArrival').addEventListener('change', (e) => {
+                    this.settings.emailOnArrival = e.target.checked;
+                    this.saveSettings();
+                });
+                
+                document.getElementById('emailOnDeparture').addEventListener('change', (e) => {
+                    this.settings.emailOnDeparture = e.target.checked;
+                    this.saveSettings();
+                });
+                
+                document.getElementById('testEmailBtn').addEventListener('click', () => this.sendTestEmail());
+                
+                // Video events
                 this.video.addEventListener('loadedmetadata', () => {
                     this.canvas.width = this.video.videoWidth;
                     this.canvas.height = this.video.videoHeight;
@@ -584,6 +1289,67 @@
                         this.startDetection();
                     }
                 });
+            }
+
+            toggleTheme() {
+                this.settings.isDarkMode = !this.settings.isDarkMode;
+                document.body.classList.toggle('dark-mode', this.settings.isDarkMode);
+                document.getElementById('themeToggle').textContent = this.settings.isDarkMode ? '☀️' : '🌙';
+                this.saveSettings();
+            }
+
+            // Image compression and processing methods
+            compressImage(canvas, quality = 0.3, maxWidth = 300, maxHeight = 200) {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                let { width, height } = canvas;
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                
+                if (ratio < 1) {
+                    width *= ratio;
+                    height *= ratio;
+                }
+                
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                tempCtx.drawImage(canvas, 0, 0, width, height);
+                
+                return tempCanvas.toDataURL('image/jpeg', quality);
+            }
+
+            createThumbnail(canvas) {
+                return this.compressImage(canvas, 0.2, 150, 100);
+            }
+
+            getImageData(photoCanvas) {
+                switch (this.settings.imageMode) {
+                    case 'compressed':
+                        return this.compressImage(photoCanvas, this.settings.imageQuality / 100);
+                    case 'thumbnail':
+                        return this.createThumbnail(photoCanvas);
+                    case 'none':
+                        return null;
+                    case 'link':
+                        return 'https://your-cloud-storage.com/detection-image.jpg';
+                    default:
+                        return this.compressImage(photoCanvas, 0.3);
+                }
+            }
+
+            getImageInfo() {
+                switch (this.settings.imageMode) {
+                    case 'compressed':
+                        return `Compressed image (Quality: ${this.settings.imageQuality}%)`;
+                    case 'thumbnail':
+                        return 'Small thumbnail attached';
+                    case 'none':
+                        return 'No image attached';
+                    case 'link':
+                        return 'Image link provided';
+                    default:
+                        return 'Image attached';
+                }
             }
 
             async startCamera() {
@@ -611,7 +1377,7 @@
                         errorMessage += error.message;
                     }
                     
-                    this.updateStatus('error', errorMessage, true);
+                    this.updateStatus('error', errorMessage);
                 }
             }
 
@@ -620,7 +1386,6 @@
                 
                 let constraints;
                 if (selectedCamera && selectedCamera.deviceId) {
-                    // Use specific device ID
                     constraints = {
                         video: {
                             deviceId: { exact: selectedCamera.deviceId },
@@ -629,7 +1394,6 @@
                         }
                     };
                 } else {
-                    // Fallback to facingMode
                     const facingMode = this.currentCameraIndex === 0 ? 'user' : 'environment';
                     constraints = {
                         video: {
@@ -640,12 +1404,9 @@
                     };
                 }
 
-                console.log('Camera constraints:', constraints);
-
                 this.stream = await navigator.mediaDevices.getUserMedia(constraints);
                 this.video.srcObject = this.stream;
                 
-                // Show video, hide placeholder
                 this.video.style.display = 'block';
                 this.cameraInfo.style.display = 'block';
                 const placeholder = this.cameraContainer.querySelector('.camera-placeholder');
@@ -653,7 +1414,6 @@
                     placeholder.style.display = 'none';
                 }
                 
-                // Update button states
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('switchBtn').disabled = this.availableCameras.length < 2;
                 document.getElementById('stopBtn').disabled = false;
@@ -682,7 +1442,6 @@
                 this.updateStatus('loading', 'Switching camera...');
                 
                 try {
-                    // Stop current stream
                     if (this.stream) {
                         this.stream.getTracks().forEach(track => track.stop());
                     }
@@ -690,12 +1449,9 @@
                     this.isDetecting = false;
                     this.cameraReady = false;
                     
-                    // Wait a bit for camera to release
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
-                    // Start new camera
                     await this.initializeCamera();
-                    this.renderCameraList();
                     
                 } catch (error) {
                     console.error('Camera switch error:', error);
@@ -742,7 +1498,7 @@
                 
                 document.getElementById('startBtn').disabled = false;
                 document.getElementById('switchBtn').disabled = true;
-                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
                 
                 this.updateStatus('ready', '📷 Camera stopped. Ready to restart.');
                 this.updateLogContainer('Camera stopped. Click "Start Camera" to resume detection.');
@@ -817,7 +1573,7 @@
                 }
             }
 
-            logDetection(type) {
+            async logDetection(type) {
                 const now = new Date();
                 const timeString = now.toLocaleString();
                 
@@ -826,14 +1582,19 @@
                 photoCanvas.width = this.video.videoWidth;
                 photoCanvas.height = this.video.videoHeight;
                 photoCtx.drawImage(this.video, 0, 0);
-                const photoDataUrl = photoCanvas.toDataURL('image/jpeg', 0.8);
+                
+                const photoData = this.getImageData(photoCanvas);
+                const originalPhotoData = photoCanvas.toDataURL('image/jpeg', 0.8);
                 
                 const logEntry = {
                     type: type,
                     time: timeString,
-                    photo: photoDataUrl,
+                    photo: originalPhotoData,
+                    emailPhoto: photoData,
                     camera: this.availableCameras[this.currentCameraIndex]?.label || `Camera ${this.currentCameraIndex + 1}`,
-                    id: Date.now()
+                    id: Date.now(),
+                    emailSent: false,
+                    imageInfo: this.getImageInfo()
                 };
                 
                 this.detectionHistory.unshift(logEntry);
@@ -841,12 +1602,144 @@
                 
                 document.getElementById('totalDetections').textContent = this.totalDetections;
                 
+                // Send email notification if enabled
+                if (this.settings.enableEmailNotifications && this.settings.userEmail && 
+                    this.settings.serviceId && this.settings.templateId && this.settings.publicKey) {
+                    if ((type === 'arrival' && this.settings.emailOnArrival) || 
+                        (type === 'departure' && this.settings.emailOnDeparture)) {
+                        logEntry.emailSent = await this.sendEmailNotification(logEntry);
+                    }
+                }
+                
                 this.renderLogEntry(logEntry);
+                this.showNotification(type, logEntry.emailSent);
                 
                 if (this.detectionHistory.length > 20) {
                     this.detectionHistory = this.detectionHistory.slice(0, 20);
                     this.refreshLog();
                 }
+            }
+
+            async sendEmailNotification(logEntry) {
+                if (!this.emailJSInitialized || !emailjs) {
+                    return false;
+                }
+
+                try {
+                    const templateParams = {
+                        to_email: this.settings.userEmail,
+                        to_name: 'Security System User',
+                        detection_type: logEntry.type === 'arrival' ? 'Person Arrived' : 'Person Left',
+                        detection_time: logEntry.time,
+                        camera_info: logEntry.camera,
+                        photo_data: logEntry.emailPhoto || 'No image attached',
+                        image_info: logEntry.imageInfo,
+                        system_name: 'Advanced Human Detection System by Abdullah Fahim'
+                    };
+
+                    await emailjs.send(
+                        this.settings.serviceId,
+                        this.settings.templateId,
+                        templateParams,
+                        this.settings.publicKey
+                    );
+
+                    this.emailsSent++;
+                    this.showEmailStatus('success', `✅ Email sent successfully! (${this.emailsSent} total)`);
+                    return true;
+
+                } catch (error) {
+                    console.error('Email sending error:', error);
+                    this.showEmailStatus('error', `❌ Failed to send email: ${error.text || error.message}`);
+                    return false;
+                }
+            }
+
+            async sendTestEmail() {
+                if (!this.settings.userEmail) {
+                    this.showEmailStatus('error', '❌ Please enter your email address first.');
+                    return;
+                }
+
+                if (!this.settings.serviceId || !this.settings.templateId || !this.settings.publicKey) {
+                    this.showEmailStatus('error', '❌ Please fill in all EmailJS credentials.');
+                    return;
+                }
+
+                if (!this.emailJSInitialized) {
+                    this.showEmailStatus('error', '❌ EmailJS not initialized. Please check your setup.');
+                    return;
+                }
+
+                const testBtn = document.getElementById('testEmailBtn');
+                testBtn.disabled = true;
+                testBtn.textContent = 'Sending...';
+
+                try {
+                    const testCanvas = document.createElement('canvas');
+                    testCanvas.width = 100;
+                    testCanvas.height = 100;
+                    const testCtx = testCanvas.getContext('2d');
+                    testCtx.fillStyle = '#667eea';
+                    testCtx.fillRect(0, 0, 100, 100);
+                    testCtx.fillStyle = 'white';
+                    testCtx.font = '16px Arial';
+                    testCtx.fillText('TEST', 30, 55);
+                    
+                    const testImageData = this.getImageData(testCanvas);
+
+                    const templateParams = {
+                        to_email: this.settings.userEmail,
+                        to_name: 'Security System User',
+                        detection_type: 'Test Email',
+                        detection_time: new Date().toLocaleString(),
+                        camera_info: 'Test Camera',
+                        photo_data: testImageData || 'Test image not included',
+                        image_info: this.getImageInfo(),
+                        system_name: 'Advanced Human Detection System by Abdullah Fahim'
+                    };
+
+                    await emailjs.send(
+                        this.settings.serviceId,
+                        this.settings.templateId,
+                        templateParams,
+                        this.settings.publicKey
+                    );
+
+                    this.showEmailStatus('success', '✅ Test email sent successfully!');
+
+                } catch (error) {
+                    console.error('Test email error:', error);
+                    this.showEmailStatus('error', `❌ Test email failed: ${error.text || error.message}`);
+                } finally {
+                    testBtn.disabled = false;
+                    testBtn.textContent = 'Test Email';
+                }
+            }
+
+            showEmailStatus(type, message) {
+                this.emailStatus.className = `email-status ${type}`;
+                this.emailStatus.textContent = message;
+                this.emailStatus.style.display = 'block';
+                
+                setTimeout(() => {
+                    this.emailStatus.style.display = 'none';
+                }, 5000);
+            }
+
+            showNotification(type, emailSent) {
+                const icon = type === 'arrival' ? '👋' : '🚶';
+                const title = type === 'arrival' ? 'Person Arrived' : 'Person Left';
+                const message = emailSent ? 'Email notification sent' : 'Detection logged';
+                
+                this.notification.className = `notification ${type} show`;
+                this.notification.querySelector('.notification-icon').textContent = icon;
+                this.notification.querySelector('.notification-title').textContent = title;
+                this.notification.querySelector('.notification-message').textContent = message;
+                
+                setTimeout(() => {
+                    this.notification.classList.remove('show');
+                }, 4000);
             }
 
             renderLogEntry(entry) {
@@ -855,6 +1748,11 @@
                     this.logContainer.innerHTML = '';
                 }
                 
+                const emailIndicator = entry.emailSent ? 
+                    `<div class="email-indicator sent">📧 Email sent (${entry.imageInfo})</div>` : 
+                    (this.settings.enableEmailNotifications && this.settings.userEmail ? 
+                        '<div class="email-indicator failed">📧 Email failed</div>' : '');
+                
                 const logDiv = document.createElement('div');
                 logDiv.className = `log-entry ${entry.type}`;
                 logDiv.innerHTML = `
@@ -862,6 +1760,7 @@
                     <div class="log-action">
                         ${entry.type === 'arrival' ? '👋 Person arrived' : '🚶 Person left'}
                         <small style="display: block; opacity: 0.7;">📷 ${entry.camera}</small>
+                        ${emailIndicator}
                     </div>
                     <img src="${entry.photo}" alt="Detection photo" class="log-photo">
                 `;
@@ -874,17 +1773,14 @@
                 this.detectionHistory.forEach(entry => this.renderLogEntry(entry));
             }
 
-            updateStatus(type, message, showRetry = false) {
+            updateStatus(type, message) {
                 this.status.className = `status ${type}`;
-                this.status.innerHTML = `
-                    <div>${message}</div>
-                    ${showRetry ? '<button class="retry-btn" onclick="location.reload()">Retry</button>' : ''}
-                `;
+                this.status.innerHTML = `<div>${message}</div>`;
             }
 
             updateLogContainer(message) {
                 this.logContainer.innerHTML = `
-                    <div style="text-align: center; color: #636e72; padding: 20px;">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px;">
                         ${message}
                     </div>
                 `;
@@ -892,7 +1788,7 @@
         }
 
         window.addEventListener('load', () => {
-            new EnhancedHumanDetection();
+            new AdvancedHumanDetection();
         });
     </script>
 </body>
